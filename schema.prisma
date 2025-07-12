@@ -1,0 +1,121 @@
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  email     String    @unique
+  password  String?
+  provider  AuthProvider 
+  role      UserRole  @default(Regular)
+  image     String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now())
+
+  chats Chat[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  Admin
+  Regular
+}
+
+enum AuthProvider {
+  Local
+  Google
+}
+
+model Service {
+  id           String     @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  description  String
+  questionnaire Json
+  icon         String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @default(now())
+
+  chats Chat[]
+
+  @@map("services")
+}
+
+model Chat {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  blocks    Block[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  serviceId String   @db.ObjectId
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@index([userId]) 
+  @@map("chats")
+}
+
+model Block {
+  id         String      @id @default(auto()) @map("_id") @db.ObjectId
+  title      String
+  messages   Message[]
+  status     BlockStatus @default(in_progress)
+  prediction Json?
+  isPinned   Boolean     @default(false)
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @default(now())
+
+  chatId     String      @db.ObjectId
+  chat       Chat        @relation(fields: [chatId], references: [id], onDelete: Cascade)
+
+  @@index([isPinned]) 
+  @@map("blocks")
+}
+
+model Message {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  role      Role
+  content   String
+  timestamp DateTime  @default(now())
+  fileData  FileData?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now())
+
+  blockId   String    @db.ObjectId
+  block     Block     @relation(fields: [blockId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+model FileData {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  url       String
+  name      String?
+  type      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  messageId String   @db.ObjectId @unique
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@map("file")
+}
+
+enum BlockStatus {
+  in_progress
+  completed
+}
+
+enum Role {
+  user
+  assistant
+  system
+}

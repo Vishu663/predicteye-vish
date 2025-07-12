@@ -1,0 +1,38 @@
+{
+  "pages": {
+    "/(root)/chat/page": [
+      "static/chunks/[root of the server]__9a168d._.css",
+      "static/chunks/node_modules_next_afcb47._.js",
+      "static/chunks/node_modules_tailwind-merge_dist_bundle-mjs_mjs_b854ac._.js",
+      "static/chunks/node_modules_576575._.js",
+      "static/chunks/src_1777d9._.js",
+      "static/chunks/src_app_layout_tsx_4e3efa._.js",
+      "static/chunks/node_modules_8b9035._.js",
+      "static/chunks/src_659cd2._.js",
+      "static/chunks/src_app_error_tsx_bbd980._.js",
+      "static/chunks/src_app_not-found_tsx_41fb01._.js",
+      "static/chunks/src_app_not-found_tsx_31affc._.js",
+      "static/chunks/src_c687ec._.js",
+      "static/chunks/node_modules_date-fns_f945d8._.js",
+      "static/chunks/node_modules_zod_v3_fa1130._.js",
+      "static/chunks/node_modules_axios_e4dffd._.js",
+      "static/chunks/node_modules_lodash_ba08ec._.js",
+      "static/chunks/node_modules_recharts_es6_59e357._.js",
+      "static/chunks/node_modules_micromark_dev_lib_0428ac._.js",
+      "static/chunks/node_modules_micromark-core-commonmark_dev_lib_36a4b4._.js",
+      "static/chunks/node_modules_@radix-ui_e74eeb._.js",
+      "static/chunks/node_modules_c4c36a._.js",
+      "static/chunks/src_app_(root)_chat_page_tsx_8a7a4a._.js",
+      "static/chunks/node_modules_next_dist_compiled_react_a1d82d._.js",
+      "static/chunks/node_modules_next_dist_compiled_react-dom_cjs_react-dom_development_c9a189.js",
+      "static/chunks/node_modules_next_dist_compiled_react-dom_87a050._.js",
+      "static/chunks/node_modules_next_dist_compiled_e13b54._.js",
+      "static/chunks/node_modules_next_dist_client_980fc6._.js",
+      "static/chunks/node_modules_next_dist_38ecb8._.js",
+      "static/chunks/node_modules_@swc_helpers_cjs_00636a._.js",
+      "static/chunks/[turbopack]_dev_client_hmr-client_ts_770d8b._.js",
+      "static/chunks/node_modules_next_dist_esm_build_templates_app-page_f0cca6.js",
+      "static/chunks/node_modules_next_dist_esm_build_templates_app-page_043207.js"
+    ]
+  }
+}

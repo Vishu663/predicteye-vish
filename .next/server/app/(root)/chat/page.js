@@ -1,0 +1,12 @@
+const CHUNK_PUBLIC_PATH = "server/app/(root)/chat/page.js";
+const runtime = require("../../../chunks/ssr/[turbopack]_runtime.js");
+runtime.loadChunk("server/chunks/ssr/node_modules_next_1959bf._.js");
+runtime.loadChunk("server/chunks/ssr/node_modules_tailwind-merge_dist_bundle-mjs_mjs_6bc68a._.js");
+runtime.loadChunk("server/chunks/ssr/node_modules_next-auth_838251._.js");
+runtime.loadChunk("server/chunks/ssr/node_modules_zod_v3_ebda43._.js");
+runtime.loadChunk("server/chunks/ssr/node_modules_openid-client_1f67dc._.js");
+runtime.loadChunk("server/chunks/ssr/node_modules_jose_dist_node_cjs_f8a533._.js");
+runtime.loadChunk("server/chunks/ssr/node_modules_278b5c._.js");
+runtime.loadChunk("server/chunks/ssr/[root of the server]__1b1dbd._.js");
+runtime.getOrInstantiateRuntimeModule("[project]/.next-internal/server/app/(root)/chat/page/actions.js [app-rsc] (ecmascript)", CHUNK_PUBLIC_PATH);
+module.exports = runtime.getOrInstantiateRuntimeModule("[project]/node_modules/next/dist/esm/build/templates/app-page.js?page=/(root)/chat/page { COMPONENT_0 => \"[project]/src/app/layout.tsx [app-rsc] (ecmascript, Next.js server component)\", COMPONENT_1 => \"[project]/src/app/error.tsx [app-rsc] (ecmascript, Next.js server component)\", COMPONENT_2 => \"[project]/src/app/not-found.tsx [app-rsc] (ecmascript, Next.js server component)\", COMPONENT_3 => \"[project]/src/app/(root)/chat/page.tsx [app-rsc] (ecmascript, Next.js server component)\" } [app-rsc] (ecmascript) <facade>", CHUNK_PUBLIC_PATH).exports;
