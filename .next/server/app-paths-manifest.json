@@ -1,16 +1,18 @@
 {
-  "/(root)/(auth)/register/page": "app/(root)/(auth)/register/page.js",
-  "/_not-found/page": "app/_not-found/page.js",
+  "/page": "app/page.js",
   "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
-  "/api/auth/register/route": "app/api/auth/register/route.js",
-  "/(root)/(auth)/login/page": "app/(root)/(auth)/login/page.js",
+  "/(root)/products/page": "app/(root)/products/page.js",
+  "/api/blocks/route": "app/api/blocks/route.js",
+  "/_not-found/page": "app/_not-found/page.js",
   "/(root)/chat/page": "app/(root)/chat/page.js",
   "/api/services/route": "app/api/services/route.js",
   "/api/chats/me/route": "app/api/chats/me/route.js",
-  "/api/chats/route": "app/api/chats/route.js",
   "/api/chats/[chatId]/route": "app/api/chats/[chatId]/route.js",
-  "/api/upload/route": "app/api/upload/route.js",
   "/api/chats/[chatId]/block/[blockId]/message/route": "app/api/chats/[chatId]/block/[blockId]/message/route.js",
   "/api/predict/route": "app/api/predict/route.js",
-  "/api/chats/[chatId]/block/[blockId]/route": "app/api/chats/[chatId]/block/[blockId]/route.js"
+  "/api/chats/[chatId]/block/[blockId]/route": "app/api/chats/[chatId]/block/[blockId]/route.js",
+  "/api/chats/route": "app/api/chats/route.js",
+  "/api/upload/route": "app/api/upload/route.js",
+  "/api/detect-category/route": "app/api/detect-category/route.js",
+  "/api/chats/[chatId]/block/route": "app/api/chats/[chatId]/block/route.js"
 }

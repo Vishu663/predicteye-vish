@@ -5,10 +5,17 @@ import { NextResponse } from "next/server";
 
 export async function POST(
   request: Request,
-  { params }: { params: Promise<{ chatId: string }> },
+  { params }: { params: Promise<{ chatId: string }> }
 ) {
   try {
     const { chatId } = await params;
+    let body;
+    try {
+      body = await request.json();
+    } catch (err) {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+    const { category } = body; // ✅ Extract category from request body
 
     // Validate chat exists
     const chat = await prisma.chat.findUnique({
@@ -24,7 +31,7 @@ export async function POST(
       logger.error(`Chat not found when creating block: ${chatId}`);
       return NextResponse.json(
         { success: false, error: "Chat not found" },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
@@ -34,6 +41,7 @@ export async function POST(
         chatId,
       },
     });
+
     const block = await prisma.block.create({
       data: {
         chatId: chat.id,
@@ -43,12 +51,12 @@ export async function POST(
             data: [
               {
                 role: "system",
-                content: `You are an AI assistant that helps predict resale values for ${chat.service.name}. Ask the user questions about their item to provide an accurate prediction.`,
+                content: `You are an AI assistant that helps predict resale values for ${category || chat.service.name}. Ask the user a set of specific and relevant questions about their item to help generate an accurate resale prediction.`, // ✅ Dynamic prompt
                 timestamp: new Date(),
               },
               {
                 role: "assistant",
-                content: `Let's start a new prediction. Please provide details about your item or upload images to get started.`,
+                content: `Let's begin the prediction process for this ${category || "item"}. Please answer a few questions to help us estimate its resale value.`,
                 timestamp: new Date(),
               },
             ],

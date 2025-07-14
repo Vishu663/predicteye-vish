@@ -15,6 +15,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+
 type ChatInterfaceProps = {
   userId: string;
 };
@@ -49,8 +50,35 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
   const [chatsByDate, setChatsByDate] = useState<Record<string, Chat[]>>({});
   const [isNewChat, setIsNewChat] = useState(true);
   const [selectedServiceId, setSelectedServiceId] = useState<string | null>(
-    null,
+    null
   );
+  const [pendingCategory, setPendingCategory] = useState<string | null>(null);
+
+useEffect(() => {
+  const handleAutoFill = async () => {
+    const currentQuestion = service?.questionnaire?.[currentQuestionIndex];
+
+    // Auto-fill the itemType dropdown and delay before submission
+    if (
+      pendingCategory &&
+      currentQuestion?.name === "itemType"
+    ) {
+      console.log("🪄 Auto-filling itemType with:", pendingCategory);
+      setInput(pendingCategory);
+
+      // Use a short flush to let React state settle
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      console.log("🚀 Submitting auto-filled input...");
+      sendMessage(pendingCategory);
+      setPendingCategory(null);
+    }
+  };
+
+  handleAutoFill();
+}, [currentQuestionIndex, service, pendingCategory]);
+
+
 
   useEffect(() => {
     if (isMobile) {
@@ -88,7 +116,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
           // Sort by createdAt in descending order to get the most recent
           const sortedBlocks = [...blocksData].sort(
             (a, b) =>
-              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+              new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
           );
 
           const mostRecentBlock = sortedBlocks[0];
@@ -104,7 +132,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
           setUploadedFiles(
             blockMessages
               .filter((m: { fileData: UploadedFile }) => m.fileData)
-              .map((m: { fileData: UploadedFile }) => m.fileData),
+              .map((m: { fileData: UploadedFile }) => m.fileData)
           );
 
           // Check if the block is complete
@@ -113,13 +141,13 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
           } else {
             // If not complete, try to determine what question we're on
             const userMessages = blockMessages.filter(
-              (m: { role: string }) => m.role === "user",
+              (m: { role: string }) => m.role === "user"
             ).length;
             setCurrentQuestionIndex(
               Math.min(
                 userMessages,
-                data.chat.service?.questionnaire?.length || 0,
-              ),
+                data.chat.service?.questionnaire?.length || 0
+              )
             );
 
             // If we've already answered all questions but block isn't complete
@@ -208,7 +236,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
 
           // Find the service
           const selectedService = servicesData.services.find(
-            (s: Service) => s.id === serviceId,
+            (s: Service) => s.id === serviceId
           );
           if (selectedService) {
             setService(selectedService);
@@ -269,8 +297,20 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
     try {
       const response = await fetch(`/api/chats/${chatId}/block`, {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          message: "Your message or payload here",
+        }),
       });
+
       const data = await response.json();
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server error: ${response.status} - ${errorText}`);
+      }
 
       if (data.success) {
         // Update the block with messages array if it doesn't exist
@@ -303,7 +343,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
           // Save the message to the block
           const success = await saveMessageToBlock(
             data.block.id,
-            assistantMessage,
+            assistantMessage
           );
 
           if (success) {
@@ -315,15 +355,15 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
               prev.map((b) =>
                 b.id === data.block.id
                   ? { ...b, messages: [assistantMessage] }
-                  : b,
-              ),
+                  : b
+              )
             );
 
             // Update current block
             setCurrentBlock((prev) =>
               prev && prev.id === data.block.id
                 ? { ...prev, messages: [assistantMessage] }
-                : prev,
+                : prev
             );
           }
         } else {
@@ -337,7 +377,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
           // Save the message to the block
           const success = await saveMessageToBlock(
             data.block.id,
-            welcomeMessage,
+            welcomeMessage
           );
 
           if (success) {
@@ -349,15 +389,15 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
               prev.map((b) =>
                 b.id === data.block.id
                   ? { ...b, messages: [welcomeMessage] }
-                  : b,
-              ),
+                  : b
+              )
             );
 
             // Update current block
             setCurrentBlock((prev) =>
               prev && prev.id === data.block.id
                 ? { ...prev, messages: [welcomeMessage] }
-                : prev,
+                : prev
             );
           }
         }
@@ -377,7 +417,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
   // Update block status
   const updateBlockStatus = async (
     blockId: string,
-    status: "completed" | "in_progress",
+    status: "completed" | "in_progress"
   ) => {
     if (!chatId) return;
 
@@ -435,7 +475,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
               fileData: message.fileData,
             },
           }),
-        },
+        }
       );
 
       const data = await response.json();
@@ -454,7 +494,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
 
         // Update the block in the blocks array
         setBlocks((prev) =>
-          prev.map((b) => (b.id === blockId ? data.block : b)),
+          prev.map((b) => (b.id === blockId ? data.block : b))
         );
       }
 
@@ -553,7 +593,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
           // Save the message to the block
           const success = await saveMessageToBlock(
             data.block.id,
-            assistantMessage,
+            assistantMessage
           );
 
           if (success) {
@@ -565,15 +605,15 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
               prev.map((b) =>
                 b.id === data.block.id
                   ? { ...b, messages: [assistantMessage] }
-                  : b,
-              ),
+                  : b
+              )
             );
 
             // Update current block
             setCurrentBlock((prev) =>
               prev && prev.id === data.block.id
                 ? { ...prev, messages: [assistantMessage] }
-                : prev,
+                : prev
             );
           }
         } else {
@@ -587,7 +627,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
           // Save the message to the block
           const success = await saveMessageToBlock(
             data.block.id,
-            welcomeMessage,
+            welcomeMessage
           );
 
           if (success) {
@@ -599,15 +639,15 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
               prev.map((b) =>
                 b.id === data.block.id
                   ? { ...b, messages: [welcomeMessage] }
-                  : b,
-              ),
+                  : b
+              )
             );
 
             // Update current block
             setCurrentBlock((prev) =>
               prev && prev.id === data.block.id
                 ? { ...prev, messages: [welcomeMessage] }
-                : prev,
+                : prev
             );
           }
         }
@@ -618,10 +658,11 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
   };
 
   // Send message
-  const sendMessage = async () => {
+  const sendMessage = async (customInput?: string | React.SyntheticEvent) => {
+    const finalInput = typeof customInput === "string" ? customInput : input;
     // Ensure we have content to send
     const hasContent =
-      input.trim() ||
+      finalInput.trim() ||
       uploadedFiles.length > 0 ||
       selectedDate ||
       selectedOptions.length > 0;
@@ -645,29 +686,29 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
           case "email":
           case "textarea":
           case "number":
-            messageContent = input.trim();
+            messageContent = finalInput.trim();
             break;
           case "date":
             messageContent = selectedDate ? format(selectedDate, "PPP") : "";
             break;
           case "dropdown":
-            messageContent = input.trim();
+            messageContent = finalInput.trim();
             break;
           case "checkbox":
             messageContent =
               selectedOptions.length > 0 ? selectedOptions.join(", ") : "";
             break;
           case "radio":
-            messageContent = input.trim();
+            messageContent = finalInput.trim();
             break;
           case "file":
             messageContent = uploadedFiles.length ? uploadedFiles[0].name : "";
             break;
           default:
-            messageContent = input.trim();
+            messageContent = finalInput.trim();
         }
       } else {
-        messageContent = input.trim();
+        messageContent = finalInput.trim();
       }
 
       // Only set "No input provided" if messageContent is still empty
@@ -716,16 +757,14 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
 
           // Update the current block
           setCurrentBlock((prev) =>
-            prev ? { ...prev, messages: updatedMessages } : prev,
+            prev ? { ...prev, messages: updatedMessages } : prev
           );
 
           // Update the block in the blocks array
           setBlocks((prev) =>
             prev.map((b) =>
-              b.id === currentBlock.id
-                ? { ...b, messages: updatedMessages }
-                : b,
-            ),
+              b.id === currentBlock.id ? { ...b, messages: updatedMessages } : b
+            )
           );
         }
       }
@@ -783,7 +822,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
           if (currentBlock) {
             const success = await saveMessageToBlock(
               currentBlock.id,
-              assistantMessage,
+              assistantMessage
             );
 
             if (success) {
@@ -799,7 +838,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
 
                 // Update the current block
                 setCurrentBlock((prev) =>
-                  prev ? { ...prev, messages: updatedMessages } : prev,
+                  prev ? { ...prev, messages: updatedMessages } : prev
                 );
 
                 // Update the block in the blocks array
@@ -807,8 +846,8 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
                   prev.map((b) =>
                     b.id === currentBlock.id
                       ? { ...b, messages: updatedMessages }
-                      : b,
-                  ),
+                      : b
+                  )
                 );
               }
             }
@@ -832,7 +871,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
           if (currentBlock) {
             const success = await saveMessageToBlock(
               currentBlock.id,
-              completionMessage,
+              completionMessage
             );
 
             if (success) {
@@ -848,7 +887,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
 
                 // Update the current block
                 setCurrentBlock((prev) =>
-                  prev ? { ...prev, messages: updatedMessages } : prev,
+                  prev ? { ...prev, messages: updatedMessages } : prev
                 );
 
                 // Update the block in the blocks array
@@ -856,8 +895,8 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
                   prev.map((b) =>
                     b.id === currentBlock.id
                       ? { ...b, messages: updatedMessages }
-                      : b,
-                  ),
+                      : b
+                  )
                 );
               }
             }
@@ -889,16 +928,14 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
 
           // Update the current block
           setCurrentBlock((prev) =>
-            prev ? { ...prev, messages: updatedMessages } : prev,
+            prev ? { ...prev, messages: updatedMessages } : prev
           );
 
           // Update the block in the blocks array
           setBlocks((prev) =>
             prev.map((b) =>
-              b.id === currentBlock.id
-                ? { ...b, messages: updatedMessages }
-                : b,
-            ),
+              b.id === currentBlock.id ? { ...b, messages: updatedMessages } : b
+            )
           );
         }
 
@@ -924,7 +961,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
             if (currentBlock) {
               const success = await saveMessageToBlock(
                 currentBlock.id,
-                predictionMessage,
+                predictionMessage
               );
 
               if (success) {
@@ -953,7 +990,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
                           messages: updatedMessages,
                           prediction: predictionData,
                         }
-                      : prev,
+                      : prev
                   );
 
                   // Update the block in the blocks array with both messages and prediction
@@ -965,8 +1002,8 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
                             messages: updatedMessages,
                             prediction: predictionData,
                           }
-                        : b,
-                    ),
+                        : b
+                    )
                   );
 
                   // Mark block as completed - this is where we need to ensure the UI updates
@@ -981,8 +1018,8 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
                             status: "completed",
                             prediction: predictionData,
                           }
-                        : b,
-                    ),
+                        : b
+                    )
                   );
                 }
               }
@@ -1003,7 +1040,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
           if (currentBlock) {
             const success = await saveMessageToBlock(
               currentBlock.id,
-              errorMessage,
+              errorMessage
             );
 
             if (success) {
@@ -1019,7 +1056,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
 
                 // Update the current block
                 setCurrentBlock((prev) =>
-                  prev ? { ...prev, messages: updatedMessages } : prev,
+                  prev ? { ...prev, messages: updatedMessages } : prev
                 );
 
                 // Update the block in the blocks array
@@ -1027,8 +1064,8 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
                   prev.map((b) =>
                     b.id === currentBlock.id
                       ? { ...b, messages: updatedMessages }
-                      : b,
-                  ),
+                      : b
+                  )
                 );
               }
             }
@@ -1061,16 +1098,14 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
 
           // Update the current block
           setCurrentBlock((prev) =>
-            prev ? { ...prev, messages: updatedMessages } : prev,
+            prev ? { ...prev, messages: updatedMessages } : prev
           );
 
           // Update the block in the blocks array
           setBlocks((prev) =>
             prev.map((b) =>
-              b.id === currentBlock.id
-                ? { ...b, messages: updatedMessages }
-                : b,
-            ),
+              b.id === currentBlock.id ? { ...b, messages: updatedMessages } : b
+            )
           );
         }
 
@@ -1106,8 +1141,8 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
                 prev.map((b) =>
                   b.id === data.block.id
                     ? { ...data.block, status: b.status || "in_progress" }
-                    : b,
-                ),
+                    : b
+                )
               );
             }
           }
@@ -1130,7 +1165,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
           // Update the current block by removing the typing message and adding an error message
           if (currentBlock) {
             const filteredMessages = (currentBlock.messages || []).filter(
-              (m) => m.content !== "Thinking...",
+              (m) => m.content !== "Thinking..."
             );
 
             const errorMessage = {
@@ -1143,7 +1178,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
 
             // Update the current block
             setCurrentBlock((prev) =>
-              prev ? { ...prev, messages: updatedMessages } : prev,
+              prev ? { ...prev, messages: updatedMessages } : prev
             );
 
             // Update the block in the blocks array
@@ -1151,8 +1186,8 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
               prev.map((b) =>
                 b.id === currentBlock.id
                   ? { ...b, messages: updatedMessages }
-                  : b,
-              ),
+                  : b
+              )
             );
           }
         }
@@ -1164,58 +1199,70 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
     }
   };
 
-  // Handle file upload
-  const handleFileUpload = async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
+// Handle file upload
+const handleFileUpload = async (files: FileList | null) => {
+  if (!files || files.length === 0) return;
 
-    try {
-      setUploading(true);
+  try {
+    setUploading(true);
 
-      // Only process the first file
-      const file = files[0];
-      const formData = new FormData();
-      formData.append("file", file);
+    const file = files[0];
+    const formData = new FormData();
+    formData.append("file", file);
 
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+    const response = await fetch("/api/upload", {
+      method: "POST",
+      body: formData,
+    });
 
-      const data = await response.json();
+    const contentType = response.headers.get("content-type") || "";
+    if (!contentType.includes("application/json")) {
+      throw new Error("Unexpected response format");
+    }
 
-      if (data.success) {
-        const newFile = {
-          url: data.result.secure_url,
-          name: file.name,
-          type: file.type,
+    const data = await response.json();
+    console.log("Full upload response:", data); // 🐛
+
+    if (data.success) {
+      const newFile = {
+        url: data.result.secure_url,
+        name: file.name,
+        type: file.type,
+      };
+
+      setUploadedFiles([newFile]);
+
+      // The category is now detected on the backend during upload
+      if (data.category) {
+        console.log("✔ Detected category from backend:", data.category);
+        setPendingCategory(data.category); // 🆕 Store it
+      } else {
+        console.log("❌ No category detected from backend.");
+      }
+
+      // 🖼️ Show file preview in chat
+      if (currentField?.type === "file") {
+        const filePreviewMessage: Message = {
+          role: "user",
+          content: "Selected file:",
+          fileData: newFile,
+          timestamp: new Date(),
+          isPreview: true,
         };
 
-        setUploadedFiles([newFile]);
-
-        // If it's a file field, immediately show the file in the chat
-        if (currentField?.type === "file") {
-          // Create a temporary message to show the file
-          const filePreviewMessage: Message = {
-            role: "user",
-            content: "Selected file:",
-            fileData: newFile,
-            timestamp: new Date(),
-            isPreview: true, // Mark as preview so we can replace it when actually sending
-          };
-
-          setMessages((prev) => {
-            // Filter out any previous preview messages
-            const filteredMessages = prev.filter((m) => !m.isPreview);
-            return [...filteredMessages, filePreviewMessage];
-          });
-        }
+        setMessages((prev) => {
+          const filteredMessages = prev.filter((m) => !m.isPreview);
+          return [...filteredMessages, filePreviewMessage];
+        });
       }
-    } catch (error) {
-      ClientSideErrorHandler(error);
-    } finally {
-      setUploading(false);
     }
-  };
+  } catch (error) {
+    ClientSideErrorHandler(error);
+  } finally {
+    setUploading(false);
+  }
+};
+
 
   // Handle drag events
   const handleDrag = (e: React.DragEvent) => {
@@ -1273,7 +1320,7 @@ export default function ChatInterface({ userId }: ChatInterfaceProps) {
           "relative flex flex-1 flex-col transition-all duration-200",
           isSidebarOpen
             ? "pointer-events-none w-0 opacity-0 md:pointer-events-auto md:w-[70%] md:opacity-100 lg:w-[75%] xl:w-[80%]"
-            : "w-full",
+            : "w-full"
         )}
         ref={chatContainerRef}
         onDragEnter={handleDrag}

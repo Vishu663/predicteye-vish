@@ -1502,6 +1502,7 @@ const FURNITURE_SERVICE = {
             label: "What type of furniture is it?",
             type: "dropdown",
             required: true,
+            autoDetectable: true,
             options: [
                 "Chair",
                 "Table",
@@ -3733,6 +3734,27 @@ function ChatInterface({ userId }) {
     const [chatsByDate, setChatsByDate] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])({});
     const [isNewChat, setIsNewChat] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(true);
     const [selectedServiceId, setSelectedServiceId] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
+    const [pendingCategory, setPendingCategory] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useState"])(null);
+    (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
+        const handleAutoFill = async ()=>{
+            const currentQuestion = service?.questionnaire?.[currentQuestionIndex];
+            // Auto-fill the itemType dropdown and delay before submission
+            if (pendingCategory && currentQuestion?.name === "itemType") {
+                console.log("🪄 Auto-filling itemType with:", pendingCategory);
+                setInput(pendingCategory);
+                // Use a short flush to let React state settle
+                await new Promise((resolve)=>setTimeout(resolve, 100));
+                console.log("🚀 Submitting auto-filled input...");
+                sendMessage(pendingCategory);
+                setPendingCategory(null);
+            }
+        };
+        handleAutoFill();
+    }, [
+        currentQuestionIndex,
+        service,
+        pendingCategory
+    ]);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         if (isMobile) {
             setIsSidebarOpen(false);
@@ -3902,9 +3924,19 @@ function ChatInterface({ userId }) {
         if (!chatId) return;
         try {
             const response = await fetch(`/api/chats/${chatId}/block`, {
-                method: "POST"
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    message: "Your message or payload here"
+                })
             });
             const data = await response.json();
+            if (!response.ok) {
+                const errorText = await response.text();
+                throw new Error(`Server error: ${response.status} - ${errorText}`);
+            }
             if (data.success) {
                 // Update the block with messages array if it doesn't exist
                 const newBlock = {
@@ -4210,9 +4242,10 @@ function ChatInterface({ userId }) {
         }
     };
     // Send message
-    const sendMessage = async ()=>{
+    const sendMessage = async (customInput)=>{
+        const finalInput = typeof customInput === "string" ? customInput : input;
         // Ensure we have content to send
-        const hasContent = input.trim() || uploadedFiles.length > 0 || selectedDate || selectedOptions.length > 0;
+        const hasContent = finalInput.trim() || uploadedFiles.length > 0 || selectedDate || selectedOptions.length > 0;
         if (!hasContent && !questionnaireComplete) {
             return;
         }
@@ -4228,28 +4261,28 @@ function ChatInterface({ userId }) {
                     case "email":
                     case "textarea":
                     case "number":
-                        messageContent = input.trim();
+                        messageContent = finalInput.trim();
                         break;
                     case "date":
                         messageContent = selectedDate ? (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$date$2d$fns$2f$format$2e$mjs__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__["format"])(selectedDate, "PPP") : "";
                         break;
                     case "dropdown":
-                        messageContent = input.trim();
+                        messageContent = finalInput.trim();
                         break;
                     case "checkbox":
                         messageContent = selectedOptions.length > 0 ? selectedOptions.join(", ") : "";
                         break;
                     case "radio":
-                        messageContent = input.trim();
+                        messageContent = finalInput.trim();
                         break;
                     case "file":
                         messageContent = uploadedFiles.length ? uploadedFiles[0].name : "";
                         break;
                     default:
-                        messageContent = input.trim();
+                        messageContent = finalInput.trim();
                 }
             } else {
-                messageContent = input.trim();
+                messageContent = finalInput.trim();
             }
             // Only set "No input provided" if messageContent is still empty
             if (!messageContent) {
@@ -4654,7 +4687,6 @@ function ChatInterface({ userId }) {
         if (!files || files.length === 0) return;
         try {
             setUploading(true);
-            // Only process the first file
             const file = files[0];
             const formData = new FormData();
             formData.append("file", file);
@@ -4662,7 +4694,12 @@ function ChatInterface({ userId }) {
                 method: "POST",
                 body: formData
             });
+            const contentType = response.headers.get("content-type") || "";
+            if (!contentType.includes("application/json")) {
+                throw new Error("Unexpected response format");
+            }
             const data = await response.json();
+            console.log("Full upload response:", data); // 🐛
             if (data.success) {
                 const newFile = {
                     url: data.result.secure_url,
@@ -4672,9 +4709,15 @@ function ChatInterface({ userId }) {
                 setUploadedFiles([
                     newFile
                 ]);
-                // If it's a file field, immediately show the file in the chat
+                // The category is now detected on the backend during upload
+                if (data.category) {
+                    console.log("✔ Detected category from backend:", data.category);
+                    setPendingCategory(data.category); // 🆕 Store it
+                } else {
+                    console.log("❌ No category detected from backend.");
+                }
+                // 🖼️ Show file preview in chat
                 if (currentField?.type === "file") {
-                    // Create a temporary message to show the file
                     const filePreviewMessage = {
                         role: "user",
                         content: "Selected file:",
@@ -4683,7 +4726,6 @@ function ChatInterface({ userId }) {
                         isPreview: true
                     };
                     setMessages((prev)=>{
-                        // Filter out any previous preview messages
                         const filteredMessages = prev.filter((m)=>!m.isPreview);
                         return [
                             ...filteredMessages,
@@ -4720,12 +4762,12 @@ function ChatInterface({ userId }) {
                 className: "h-8 w-8 animate-spin text-primary"
             }, void 0, false, {
                 fileName: "[project]/src/components/common/chat-interface.tsx",
-                lineNumber: 1245,
+                lineNumber: 1292,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/components/common/chat-interface.tsx",
-            lineNumber: 1244,
+            lineNumber: 1291,
             columnNumber: 7
         }, this);
     }
@@ -4749,7 +4791,7 @@ function ChatInterface({ userId }) {
                 onNewChat: createNewChat
             }, void 0, false, {
                 fileName: "[project]/src/components/common/chat-interface.tsx",
-                lineNumber: 1253,
+                lineNumber: 1300,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])("section", {
@@ -4769,7 +4811,7 @@ function ChatInterface({ userId }) {
                         onDiscardBlock: ()=>{}
                     }, void 0, false, {
                         fileName: "[project]/src/components/common/chat-interface.tsx",
-                        lineNumber: 1285,
+                        lineNumber: 1332,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$pages$2f$chat$2f$message$2d$list$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -4783,7 +4825,7 @@ function ChatInterface({ userId }) {
                         onSelectService: createNewChat
                     }, void 0, false, {
                         fileName: "[project]/src/components/common/chat-interface.tsx",
-                        lineNumber: 1295,
+                        lineNumber: 1342,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$future$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$components$2f$pages$2f$chat$2f$dynamic$2d$input$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -4810,19 +4852,19 @@ function ChatInterface({ userId }) {
                         allQuestionsAttempted: service?.questionnaire && currentQuestionIndex >= service.questionnaire.length
                     }, void 0, false, {
                         fileName: "[project]/src/components/common/chat-interface.tsx",
-                        lineNumber: 1308,
+                        lineNumber: 1355,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/components/common/chat-interface.tsx",
-                lineNumber: 1271,
+                lineNumber: 1318,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/components/common/chat-interface.tsx",
-        lineNumber: 1251,
+        lineNumber: 1298,
         columnNumber: 5
     }, this);
 }

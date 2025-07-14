@@ -19,6 +19,7 @@ export type Chat = {
 };
 
 export type Field = {
+  autoDetectable: Field;
   name: string;
   label: string;
   type: string;

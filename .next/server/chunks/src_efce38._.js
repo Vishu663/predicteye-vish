@@ -25,6 +25,7 @@ const FURNITURE_SERVICE = {
             label: "What type of furniture is it?",
             type: "dropdown",
             required: true,
+            autoDetectable: true,
             options: [
                 "Chair",
                 "Table",
@@ -462,7 +463,6 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$serv
 ;
 ;
 ;
-// Configure Cloudinary
 __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$cloudinary$2f$cloudinary$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["v2"].config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
     api_key: process.env.CLOUDINARY_API_KEY,
@@ -480,13 +480,10 @@ async function POST(request) {
                 status: 400
             });
         }
-        // Convert file to buffer
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
-        // Convert buffer to base64
         const base64 = buffer.toString("base64");
         const dataURI = `data:${file.type};base64,${base64}`;
-        // Upload to Cloudinary
         const result = await new Promise((resolve, reject)=>{
             __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$cloudinary$2f$cloudinary$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["v2"].uploader.upload(dataURI, {
                 folder: "resale-prediction"
@@ -495,9 +492,27 @@ async function POST(request) {
                 else resolve(result);
             });
         });
+        // Auto-detect category via Gemini if image upload is successful
+        let category = undefined;
+        try {
+            const res = await fetch(`${process.env.APP_BASE_URL}/api/detect-category`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    imageUrl: result.secure_url
+                })
+            });
+            const data = await res.json();
+            if (data?.category) category = data.category;
+        } catch (err) {
+            console.warn("Category detection failed:", err);
+        }
         return __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$server$2e$js__$5b$app$2d$route$5d$__$28$ecmascript$29$__["NextResponse"].json({
             success: true,
-            result
+            result,
+            category
         });
     } catch (error) {
         return (0, __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$lib$2f$helpers$2f$errors$2f$server$2e$ts__$5b$app$2d$route$5d$__$28$ecmascript$29$__["default"])(error);

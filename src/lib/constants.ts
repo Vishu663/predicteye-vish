@@ -14,6 +14,7 @@ export const FURNITURE_SERVICE = {
       label: "What type of furniture is it?",
       type: "dropdown",
       required: true,
+      autoDetectable: true,
       options: [
         "Chair",
         "Table",
